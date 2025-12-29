@@ -379,7 +379,7 @@ ANSC_STATUS IDM_sendMsg_to_Remote_device(idm_send_msg_Params_t *param)
                 strncpy(payload.param_name,param->param_name,sizeof(payload.param_name)-1);
                 strncpy(payload.param_value,param->param_value,sizeof(payload.param_value)-1);
                 payload.type = param->type;
-
+                CcspTraceInfo(("%s:%d Before send_remote_message request id %d param name - %s param value - %s \n",__FUNCTION__, __LINE__,payload.reqID,payload.param_name,payload.param_value));
                 /* send message */
                 int ret = send_remote_message(&remoteDevice->stRemoteDeviceInfo.conn_info, &payload);
                 usleep(250000); //Sleep for 250ms
