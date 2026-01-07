@@ -109,7 +109,7 @@ sendReqList* IDM_getFromSendRequestList(uint reqID)
     }
 }
 
-sendReqList* IDM_searchFromSendRequestList(const char *param_mac)
+sendReqList* IDM_searchFromSendRequestList(const char *param_mac, const char *param_name)
 {
 
     if(param_mac == NULL)
@@ -122,9 +122,12 @@ sendReqList* IDM_searchFromSendRequestList(const char *param_mac)
     {
         if (strncmp(cur->Mac_dest, param_mac, sizeof(cur->Mac_dest) - 1) == 0)
         {
-            return cur;
-	}
-	cur = cur->next;
+            if (strncmp(cur->param_name, param_name, sizeof(cur->param_name) -1) == 0)
+            {
+                return cur;
+            }
+        }
+        cur = cur->next;
     }
     return NULL;
 }
@@ -275,6 +278,7 @@ ANSC_STATUS IDM_getFile_from_Remote_device(char* Mac_dest,char* filename,char* o
                     strncpy(payload.param_name,filename,sizeof(payload.param_name)-1);
                     strncpy(newReq->output_location,output_location,sizeof(newReq->output_location)-1);
                     payload.reqID = newReq->reqId;
+		    strncpy(newReq->param_name, payload.param_name, sizeof(newReq->param_name)-1);
                     IDM_addToSendRequestList(newReq);
                     CcspTraceDebug(("Inside %s:%d peer MAC=%s\n",__FUNCTION__,__LINE__,Mac_dest));
                     send_remote_message(&remoteDevice->stRemoteDeviceInfo.conn_info, &payload);
@@ -337,7 +341,7 @@ ANSC_STATUS IDM_sendMsg_to_Remote_device(idm_send_msg_Params_t *param)
                 memset(&payload, 0, sizeof(payload_t));
                 if(param->operation == GET || param->operation == SET || param->operation == IDM_REQUEST)
                 {
-                    sendReqList *SendReq = IDM_searchFromSendRequestList(param->Mac_dest);
+                    sendReqList *SendReq = IDM_searchFromSendRequestList(param->Mac_dest, param->param_name);
                     if(SendReq != NULL)
                     {
                         CcspTraceInfo(("%s:%d Resending the same request with request id %d  \n",__FUNCTION__, __LINE__,SendReq->reqId));
@@ -354,7 +358,7 @@ ANSC_STATUS IDM_sendMsg_to_Remote_device(idm_send_msg_Params_t *param)
                             newReq->resCb = param->resCb;
                             newReq->timeout = param->timeout;
                             newReq->next = NULL;
-
+                            strncpy(newReq->param_name, param->param_name, sizeof(newReq->param_name)-1);
                             IDM_addToSendRequestList(newReq);
                             payload.reqID = newReq->reqId;
                         }
