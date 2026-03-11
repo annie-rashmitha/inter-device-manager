@@ -984,6 +984,11 @@ rbusError_t X_RDK_Connection_SetHandler(rbusHandle_t handle, rbusProperty_t prop
 {
     (void)opts;
     char const* name = rbusProperty_GetName(prop);
+
+    if(name == NULL)
+    {
+        return RBUS_ERROR_BUS_ERROR;
+    }
     rbusValue_t value = rbusProperty_GetValue(prop);
     rbusValueType_t type = rbusValue_GetType(value);
 

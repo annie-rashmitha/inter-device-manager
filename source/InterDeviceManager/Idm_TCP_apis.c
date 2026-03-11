@@ -593,11 +593,11 @@ int open_remote_connection(connection_config_t* connectionConf, int (*connection
 char* getFile_to_remote(connection_info_t* conn_info,void *payload)
 {
     CcspTraceDebug(("Inside %s:%d\n",__FUNCTION__,__LINE__));
-    FILE* fptr;
-    payload_t *Data;
-    char* buffer;
+    FILE* fptr = NULL;
+    payload_t *Data = NULL;
+    char* buffer = NULL;
     int bytes = 0;
-    uint32_t length;
+    uint32_t length = 0;
 
 #ifndef IDM_DEBUG
     if(conn_info->enc.ssl == NULL){

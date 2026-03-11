@@ -35,7 +35,7 @@ cap_user appcaps;
 
 #define DEBUG_INI_NAME  "/etc/debug.ini"
 
-char                                        g_Subsystem[32]         = {0};
+char g_Subsystem[32]         = {0};
 extern char*                                pComponentName;
 
 char g_sslCert[128];
@@ -170,12 +170,10 @@ int main(int argc, char* argv[])
     BOOL                bRunAsDaemon = TRUE;
     int                 idx = 0;
     int                 ind = -1;
-    int                 cmdChar            = 0;
-    DmErr_t             err;
+    int                 cmdChar = 0;
     char                *subSys = NULL;
     appcaps.caps = NULL;
     appcaps.user_name = NULL;
-    char buf[8] = {'\0'};
 
 #ifdef FEATURE_SUPPORT_RDKLOG
     RDK_LOGGER_INIT();
@@ -192,8 +190,10 @@ int main(int argc, char* argv[])
         {
             if((idx + 1) < argc)
             {
-		if ( AnscSizeOfString(argv[idx+1]) < sizeof(g_Subsystem))
-                    AnscCopyString(g_Subsystem, (char *)argv[idx+1]);
+                if (strlen(argv[idx+1]) > 0)
+                {
+                    snprintf(g_Subsystem, sizeof(g_Subsystem), "%s", argv[idx+1]);
+                }
             }
             else
             {
