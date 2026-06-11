@@ -51,7 +51,10 @@ static int IdmMgr_get_IDM_ParametersFromPSM()
 
     if (retPsmGet == CCSP_SUCCESS)
     {
-        AnscCopyString(pidmDmlInfo->stConnectionInfo.Capabilities, param_value);
+        if(strlen(param_value) > 0)
+        {
+            strncpy(pidmDmlInfo->stConnectionInfo.Capabilities, param_value, sizeof(pidmDmlInfo->stConnectionInfo.Capabilities) - 1);
+        }
     }
 
     _ansc_memset(param_name, 0, sizeof(param_name));
@@ -62,7 +65,10 @@ static int IdmMgr_get_IDM_ParametersFromPSM()
 
     if (retPsmGet == CCSP_SUCCESS)
     {
-        AnscCopyString(pidmDmlInfo->stConnectionInfo.Interface, param_value);
+        if(strlen(param_value) > 0)
+        {
+            strncpy(pidmDmlInfo->stConnectionInfo.Interface, param_value, sizeof(pidmDmlInfo->stConnectionInfo.Interface) - 1);
+        }
     }
 
     _ansc_memset(param_name, 0, sizeof(param_name));
@@ -205,7 +211,7 @@ void IdmMgr_SetConfigData_Default()
         pidmDmlInfo->stRemoteInfo.ulDeviceNumberOfEntries = 0;
         pidmDmlInfo->stRemoteInfo.Port = IDM_DEVICE_MESSAGING_PORT;
         pidmDmlInfo->stRemoteInfo.max_file_size = DEFAULT_MAX_FT_SIZE;
-        AnscCopyString(pidmDmlInfo->stRemoteInfo.ft_status,FT_SUCCESS);
+        strncpy(pidmDmlInfo->stRemoteInfo.ft_status, FT_SUCCESS, sizeof(pidmDmlInfo->stRemoteInfo.ft_status) - 1);
     }
 
 }
@@ -237,7 +243,7 @@ ANSC_STATUS IdmMgr_GetFactoryDefaultValue(const char * param_name,char * param_v
 {
 
     FILE * fp = NULL;
-    uint32_t len = 0;
+    size_t len = 0;
     char *line = NULL;
 
     if ((param_name == NULL))

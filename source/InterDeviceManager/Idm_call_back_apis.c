@@ -215,6 +215,11 @@ int connection_cb(device_info_t* Device, connection_info_t* conn_info, uint encr
 
     //TODO: Send request all parameters of remote device
     //Send request to get Capabilities
+
+    if(Device == NULL || conn_info == NULL)
+    {
+        return -1;
+    }
     idm_send_msg_Params_t param;
     memset(&param, 0, sizeof(param));
     strncpy(param.Mac_dest, Device->mac_addr, sizeof(param.Mac_dest)-1);
@@ -476,9 +481,17 @@ int discovery_cb(device_info_t* Device, uint discovery_status, uint authenticati
     int                      iErrorCode     = 0;
 
     Discovery_cb_threadargs *threadArgs = malloc(sizeof(Discovery_cb_threadargs));
-    strncpy(threadArgs->device.mac_addr, Device->mac_addr, MAC_ADDR_SIZE);
-    strncpy(threadArgs->device.ipv4_addr, Device->ipv4_addr, IPv4_ADDR_SIZE);
-    strncpy(threadArgs->device.ipv6_addr, Device->ipv6_addr, IPv6_ADDR_SIZE);
+
+    if(threadArgs == NULL)
+    {
+        CcspTraceInfo(("%s %d - Failed to allocate threadArgs\n", __FUNCTION__, __LINE__ ));
+        return -1;
+    }
+
+    memset((char*)threadArgs, 0 , sizeof(Discovery_cb_threadargs));
+    strncpy(threadArgs->device.mac_addr, Device->mac_addr, sizeof(threadArgs->device.mac_addr) - 1);
+    strncpy(threadArgs->device.ipv4_addr, Device->ipv4_addr, sizeof(threadArgs->device.ipv4_addr) - 1);
+    strncpy(threadArgs->device.ipv6_addr, Device->ipv6_addr, sizeof(threadArgs->device.ipv6_addr) - 1);
     threadArgs->discovery_status = discovery_status;
     threadArgs->auth_status = authentication_status;
 

@@ -348,8 +348,10 @@ ANSC_STATUS IDM_UpdateLocalDeviceData()
         CcspTraceInfo(("[%s: %d] Update Local Device Data. Iface(%s)\n", __FUNCTION__, __LINE__, pidmDmlInfo->stConnectionInfo.Interface));
         /* get Interface MAC */
         platform_hal_GetBaseMacAddress(wan_mac);
+        memset(localDevice->stRemoteDeviceInfo.MAC, 0, sizeof(localDevice->stRemoteDeviceInfo.MAC));
         strncpy(localDevice->stRemoteDeviceInfo.MAC, wan_mac, sizeof(localDevice->stRemoteDeviceInfo.MAC)-1);
         platform_hal_GetModelName(localDevice->stRemoteDeviceInfo.ModelNumber);
+        memset(localDevice->stRemoteDeviceInfo.Capabilities, 0, sizeof(localDevice->stRemoteDeviceInfo.Capabilities));
         strncpy(localDevice->stRemoteDeviceInfo.Capabilities, pidmDmlInfo->stConnectionInfo.Capabilities, sizeof(localDevice->stRemoteDeviceInfo.Capabilities)-1);
         localDevice->stRemoteDeviceInfo.HelloInterval = pidmDmlInfo->stConnectionInfo.HelloInterval;
     }

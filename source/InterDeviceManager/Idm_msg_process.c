@@ -189,7 +189,7 @@ ANSC_STATUS IDM_sendFile_to_Remote_device(char* Mac_dest,char* filename,char* ou
                 memset(&payload, 0, sizeof(payload_t));
                 payload.operation = SFT;
                 payload.msgType = SFT;
-                strncpy(payload.Mac_source, localDevice->stRemoteDeviceInfo.MAC,MAC_ADDR_SIZE-1);
+                strncpy(payload.Mac_source, localDevice->stRemoteDeviceInfo.MAC,sizeof(payload.Mac_source)-1);
                 strncpy(payload.param_name,filename,sizeof(payload.param_name)-1);
                 CcspTraceDebug(("Inside %s:%d peer MAC=%s\n",__FUNCTION__,__LINE__,Mac_dest));
                 send_status = sendFile_to_remote(&remoteDevice->stRemoteDeviceInfo.conn_info, &payload,output_location);
@@ -729,14 +729,14 @@ static void IDM_Rbus_subscriptionEventHandler(rbusHandle_t handle, rbusEvent_t c
 char* IDM_SFT_receive(connection_info_t* conn_info,void* payload)
 {
     CcspTraceDebug(("Inside %s:%d\n",__FUNCTION__,__LINE__));
-    char* buf;
+    char* buf = NULL;
     int bytes=0,length=0,total_bytes=0;
 #ifndef IDM_DEBUG
     SSL* ssl= NULL;
 #else
     int conn=0;
 #endif
-    payload_t *Data;
+    payload_t *Data = NULL;
     PIDM_DML_INFO pidmDmlInfo = IdmMgr_GetConfigData_locked();
     if( pidmDmlInfo == NULL )
     {
@@ -800,7 +800,7 @@ char* IDM_SFT_receive(connection_info_t* conn_info,void* payload)
             return FT_INVALID_FILE_SIZE;
         }
         IdmMgrDml_GetConfigData_release(pidmDmlInfo);
-        FILE* fptr;
+        FILE* fptr = NULL;
         fptr = fopen(Data->param_name,"wb");
         if(!fptr){
             CcspTraceError(("file not found\n"));
@@ -897,6 +897,11 @@ int IDM_Incoming_Request_handler(payload_t * payload)
 {
     CcspTraceInfo(("%s %d - \n", __FUNCTION__, __LINE__));
     rbusError_t err= RBUS_ERROR_SUCCESS;
+
+    if(payload == NULL)
+    {
+        return -1;
+    }
 
     if(payload->operation == IDM_SUBS)
     {
@@ -1033,8 +1038,8 @@ void *IDM_Incoming_req_handler_thread()
                 payload.reqID = ReqEntry->reqId;
                 payload.operation = ReqEntry->operation;
                 payload.msgType = GFT;
-                strncpy(payload.Mac_source,remoteDevice->stRemoteDeviceInfo.MAC,MAC_ADDR_SIZE);
-                strncpy(payload.param_name,ReqEntry->param_name,sizeof(payload.param_name));
+                strncpy(payload.Mac_source,remoteDevice->stRemoteDeviceInfo.MAC,sizeof(payload.Mac_source) - 1);
+                strncpy(payload.param_name,ReqEntry->param_name,sizeof(payload.param_name) - 1);
                 //Find the device using MAC
                 while(remoteDevice!=NULL)
                 {
@@ -1119,9 +1124,12 @@ void IDM_Broadcast_LocalDeviceInfo()
     payload.reqID = -1; //It's an Async message reqID not avaiable.
     payload.operation = IDM_REQUEST;
     payload.msgType = RES;
-    strncpy(payload.Mac_source,remoteDevice->stRemoteDeviceInfo.MAC,sizeof(payload.Mac_source)-1);
 
-    remoteDevice=remoteDevice->next; 
+    if(remoteDevice)
+    {
+        strncpy(payload.Mac_source,remoteDevice->stRemoteDeviceInfo.MAC,sizeof(payload.Mac_source)-1);
+        remoteDevice=remoteDevice->next; 
+    }
     while(remoteDevice!=NULL)
     {
         if(remoteDevice->stRemoteDeviceInfo.Status == DEVICE_CONNECTED)
