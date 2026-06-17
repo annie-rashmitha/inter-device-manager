@@ -18,7 +18,6 @@
  */
 #include <net/if.h>
 #include <sys/ioctl.h>
-#include <limits.h>
 #include "Idm_TCP_apis.h"
 #include <openssl/ssl.h>
 #include <openssl/err.h>
@@ -64,12 +63,6 @@ int idm_ssl_write_safe(connection_info_t *conn_info, const void *payload, size_t
         return -1;
     }
 
-    if (payload_len > INT_MAX)
-    {
-        CcspTraceError(("(%s:%d) invalid payload length %zu\n", __FUNCTION__, __LINE__, payload_len));
-        return -1;
-    }
-
     pthread_mutex_lock(&ssl_io_mutex);
 
     if (conn_info->conn < 0 || conn_info->enc.ctx == NULL || conn_info->enc.ssl == NULL)
@@ -78,28 +71,20 @@ int idm_ssl_write_safe(connection_info_t *conn_info, const void *payload, size_t
         goto done;
     }
 
+    int ssl_fd = SSL_get_fd(conn_info->enc.ssl);
+    int so_error = 0;
+    socklen_t optlen = sizeof(so_error);
+
+    if (ssl_fd < 0 || ssl_fd != conn_info->conn)
     {
-        int ssl_fd = SSL_get_fd(conn_info->enc.ssl);
-        int so_error = 0;
-        socklen_t optlen = sizeof(so_error);
+        CcspTraceError(("(%s:%d) SSL fd mismatch (ssl fd: %d, conn fd: %d), send failed\n", __FUNCTION__, __LINE__, ssl_fd, conn_info->conn));
+        goto done;
+    }
 
-        if (!SSL_is_init_finished(conn_info->enc.ssl))
-        {
-            CcspTraceError(("(%s:%d) SSL handshake is not complete, send failed\n", __FUNCTION__, __LINE__));
-            goto done;
-        }
-
-        if (ssl_fd < 0 || ssl_fd != conn_info->conn)
-        {
-            CcspTraceError(("(%s:%d) SSL fd mismatch (ssl fd: %d, conn fd: %d), send failed\n", __FUNCTION__, __LINE__, ssl_fd, conn_info->conn));
-            goto done;
-        }
-
-        if (getsockopt(conn_info->conn, SOL_SOCKET, SO_ERROR, &so_error, &optlen) == 0 && so_error != 0)
-        {
-            CcspTraceError(("(%s:%d) socket has pending error (%d: %s), send failed\n", __FUNCTION__, __LINE__, so_error, strerror(so_error)));
-            goto done;
-        }
+    if (!SSL_is_init_finished(conn_info->enc.ssl))
+    {
+        CcspTraceError(("(%s:%d) SSL handshake is not complete, send failed\n", __FUNCTION__, __LINE__));
+        goto done;
     }
 
     val = SSL_write(conn_info->enc.ssl, payload, (int)payload_len);
@@ -109,6 +94,7 @@ int idm_ssl_write_safe(connection_info_t *conn_info, const void *payload, size_t
         CcspTraceError(("(%s:%d) SSL_write failed (Ret: %d, SSL Error: %d)\n", __FUNCTION__, __LINE__, val, ssl_err));
         val = -1;
     }
+    CcspTraceInfo(("(%s:%d) SSL_write successful connection id %d \n", __FUNCTION__, __LINE__,conn_info->conn));
 
 done:
     pthread_mutex_unlock(&ssl_io_mutex);
@@ -726,7 +712,6 @@ char* getFile_to_remote(connection_info_t* conn_info,void *payload)
         sprintf(buffer,"%zu",length);
         strncpy_s(Data->param_value,sizeof(Data->param_value),buffer,strlen(buffer));
 #ifndef IDM_DEBUG
-        }
         if(conn_info->enc.ssl == NULL){
             CcspTraceError(("(%s:%d) SSL CTX is NULL, Data send failed\n", __FUNCTION__, __LINE__));
             free(buffer);
@@ -922,15 +907,6 @@ char* sendFile_to_remote(connection_info_t* conn_info,void *payload,char* output
 int send_remote_message(connection_info_t* conn_info,void *payload)
 {
 #ifndef IDM_DEBUG
-    if (conn_info == NULL || payload == NULL) {
-        CcspTraceError(("(%s:%d) invalid input, send failed\n", __FUNCTION__, __LINE__));
-        return -1;
-    }
-
-    if (conn_info->conn < 0) {
-        CcspTraceError(("(%s:%d) invalid socket fd, send failed\n", __FUNCTION__, __LINE__));
-        return -1;
-    }
 
     if (idm_ssl_write_safe(conn_info, payload, sizeof(payload_t)) > 0) {
         CcspTraceInfo(("(%s:%d) SSL_write successful connection id %d \n", __FUNCTION__, __LINE__, conn_info->conn));
@@ -943,6 +919,7 @@ int send_remote_message(connection_info_t* conn_info,void *payload)
         return -1;
     }
 #endif
+    CcspTraceInfo(("(%s:%d) SSL_write failed \n", __FUNCTION__, __LINE__));
     return -1;
 }
 
