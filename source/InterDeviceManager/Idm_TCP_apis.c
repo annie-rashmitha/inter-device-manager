@@ -726,11 +726,6 @@ char* getFile_to_remote(connection_info_t* conn_info,void *payload)
         sprintf(buffer,"%zu",length);
         strncpy_s(Data->param_value,sizeof(Data->param_value),buffer,strlen(buffer));
 #ifndef IDM_DEBUG
-        if (conn_info->conn < 0) {
-            CcspTraceError(("(%s:%d) Invalid socket fd, Data send failed\n", __FUNCTION__, __LINE__));
-            free(buffer);
-            fclose(fptr);
-            return FT_ERROR;
         }
         if(conn_info->enc.ssl == NULL){
             CcspTraceError(("(%s:%d) SSL CTX is NULL, Data send failed\n", __FUNCTION__, __LINE__));
