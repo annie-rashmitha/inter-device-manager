@@ -502,6 +502,7 @@ char* IDM_Incoming_FT_Response(connection_info_t* conn_info,payload_t* payload)
                 }
                 else{
                     CcspTraceError(("%s:%d ssl session is null\n",__FUNCTION__,__LINE__));
+                    remove(req->output_location);
                     fclose(fptr);
                     free(buf);
 	            free(req);
@@ -865,11 +866,12 @@ char* IDM_SFT_receive(connection_info_t* conn_info,void* payload)
             while(length<total_bytes){
 #ifndef IDM_DEBUG
                 if(conn_info->enc.ssl != NULL){
-                    // read remianing bytes
+                    // read remaining bytes
                     bytes = SSL_read(conn_info->enc.ssl, buf, total_bytes - length);
                 }
                 else{
                     CcspTraceError(("%s:%d ssl session is null\n",__FUNCTION__,__LINE__));
+                    remove(Data->param_name);
                     fclose(fptr);
                     if(buf){
                         free(buf);
