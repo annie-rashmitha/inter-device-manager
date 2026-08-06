@@ -517,6 +517,8 @@ char* IDM_Incoming_FT_Response(connection_info_t* conn_info,payload_t* payload)
                 }
                 else{
                     CcspTraceError(("(%s:%d) Data encryption failed (Err: %d)\n", __FUNCTION__, __LINE__,bytes));
+                    // Exit from loop if socket is not usable ot there is no data to read
+                    break;
                 }
             }
             if(buf){
@@ -876,6 +878,8 @@ char* IDM_SFT_receive(connection_info_t* conn_info,void* payload)
                 }
                 else{
                     CcspTraceError(("(%s:%d) Data encryption failed (Err: %d)\n", __FUNCTION__, __LINE__,bytes));
+                    // Exit from loop if socket is not usable or no data to read
+                    break;
                 }
             }
             if(buf){
