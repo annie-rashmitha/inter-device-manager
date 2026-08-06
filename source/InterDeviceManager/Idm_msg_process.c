@@ -498,7 +498,7 @@ char* IDM_Incoming_FT_Response(connection_info_t* conn_info,payload_t* payload)
             while(length<total_bytes){
 #ifndef IDM_DEBUG
                 if(conn_info->enc.ssl != NULL){
-                    bytes = SSL_read(conn_info->enc.ssl, buf, total_bytes-bytes);
+                    bytes = SSL_read(conn_info->enc.ssl, buf, total_bytes - length);
                 }
                 else{
                     CcspTraceError(("%s:%d ssl session is null\n",__FUNCTION__,__LINE__));
@@ -508,7 +508,7 @@ char* IDM_Incoming_FT_Response(connection_info_t* conn_info,payload_t* payload)
                     return FT_ERROR;
                 }
 #else
-                bytes = read( conn_info->conn , buf, total_bytes-bytes);
+                bytes = read( conn_info->conn , buf, total_bytes - length);
 #endif
                 CcspTraceInfo(("bytes transfered : %d\n",bytes));
                 if(bytes > 0){
@@ -517,7 +517,7 @@ char* IDM_Incoming_FT_Response(connection_info_t* conn_info,payload_t* payload)
                 }
                 else{
                     CcspTraceError(("(%s:%d) Socket Read Error (bytes read: %d)\n", __FUNCTION__, __LINE__,bytes));
-                    // Exit from loop if socket is not usable or there is no data to read
+                    // Exit from loop if socket is not usable or broken 
                     break;
                 }
             }
@@ -526,6 +526,13 @@ char* IDM_Incoming_FT_Response(connection_info_t* conn_info,payload_t* payload)
             }
         }
         fclose(fptr);
+        if(length < total_bytes)
+        {
+            // we couldn't read full bytes
+            remove(req->output_location);
+            free(req);
+            return FT_ERROR;
+        }
         free(req);
         return FT_SUCCESS;
     }
@@ -858,7 +865,8 @@ char* IDM_SFT_receive(connection_info_t* conn_info,void* payload)
             while(length<total_bytes){
 #ifndef IDM_DEBUG
                 if(conn_info->enc.ssl != NULL){
-                    bytes = SSL_read(conn_info->enc.ssl, buf, total_bytes-bytes);
+                    // read remianing bytes
+                    bytes = SSL_read(conn_info->enc.ssl, buf, total_bytes - length);
                 }
                 else{
                     CcspTraceError(("%s:%d ssl session is null\n",__FUNCTION__,__LINE__));
@@ -869,7 +877,8 @@ char* IDM_SFT_receive(connection_info_t* conn_info,void* payload)
                     return FT_ERROR;
                 }
 #else
-                bytes = read( conn_info->conn , buf, total_bytes-bytes);
+                // read remaining bytes
+                bytes = read( conn_info->conn , buf, total_bytes - length);
 #endif
                 CcspTraceInfo(("bytes transfered : %d\n",bytes));
                 if(bytes > 0){
@@ -878,7 +887,7 @@ char* IDM_SFT_receive(connection_info_t* conn_info,void* payload)
                 }
                 else{
                     CcspTraceError(("(%s:%d) Socket Read Error (bytes read: %d)\n", __FUNCTION__, __LINE__,bytes));
-                    // Exit from loop if socket is not usable or no data to read
+                    // Exit from loop if socket is not usable or broken
                     break;
                 }
             }
@@ -892,6 +901,12 @@ char* IDM_SFT_receive(connection_info_t* conn_info,void* payload)
     {
         CcspTraceError(("%s:%d Data is null\n",__FUNCTION__, __LINE__));
         IdmMgrDml_GetConfigData_release(pidmDmlInfo);
+        return FT_ERROR;
+    }
+    if(length < total_bytes)
+    {
+        // we couldn't read full bytes. Remove partially written file
+        remove(Data->param_name);
         return FT_ERROR;
     }
     return FT_SUCCESS;
