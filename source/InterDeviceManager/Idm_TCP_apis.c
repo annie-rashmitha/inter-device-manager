@@ -72,8 +72,6 @@ int idm_ssl_write_safe(connection_info_t *conn_info, const void *payload, size_t
     }
 
     int ssl_fd = SSL_get_fd(conn_info->enc.ssl);
-    int so_error = 0;
-    socklen_t optlen = sizeof(so_error);
 
     if (ssl_fd < 0 || ssl_fd != conn_info->conn)
     {
@@ -94,7 +92,10 @@ int idm_ssl_write_safe(connection_info_t *conn_info, const void *payload, size_t
         CcspTraceError(("(%s:%d) SSL_write failed (Ret: %d, SSL Error: %d)\n", __FUNCTION__, __LINE__, val, ssl_err));
         val = -1;
     }
-    CcspTraceInfo(("(%s:%d) SSL_write successful connection id %d \n", __FUNCTION__, __LINE__,conn_info->conn));
+    else
+    {
+        CcspTraceInfo(("(%s:%d) SSL_write successful connection id %d \n", __FUNCTION__, __LINE__,conn_info->conn));
+    }
 
 done:
     pthread_mutex_unlock(&ssl_io_mutex);
