@@ -926,7 +926,7 @@ int send_remote_message(connection_info_t* conn_info,void *payload)
     }
     else
     {
-        CcspTraceError(("%s %d - send successful \n",  __FUNCTION__, __LINE__));
+        CcspTraceInfo(("%s %d - send successful \n",  __FUNCTION__, __LINE__));
         return 0;
     }
 #endif
