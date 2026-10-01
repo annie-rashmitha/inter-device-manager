@@ -913,15 +913,23 @@ int send_remote_message(connection_info_t* conn_info,void *payload)
         CcspTraceInfo(("(%s:%d) SSL_write successful connection id %d \n", __FUNCTION__, __LINE__, conn_info->conn));
         return 0;
     }
+    else
+    {
+        CcspTraceInfo(("(%s:%d) SSL_write failed \n", __FUNCTION__, __LINE__));
+        return -1;
+    }
 #else
     if(send(conn_info->conn, payload, sizeof(payload_t), 0)<0)
     {
         CcspTraceError(("%s %d - send failed failed : %s\n",  __FUNCTION__, __LINE__, strerror(errno)));
         return -1;
     }
+    else
+    {
+        CcspTraceError(("%s %d - send successful \n",  __FUNCTION__, __LINE__));
+        return 0;
+    }
 #endif
-    CcspTraceInfo(("(%s:%d) SSL_write failed \n", __FUNCTION__, __LINE__));
-    return -1;
 }
 
 int close_remote_connection(connection_info_t* conn_info)
